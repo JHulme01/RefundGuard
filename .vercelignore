@@ -1,0 +1,10 @@
+# Vercel ignore
+node_modules/
+.git/
+*.log
+.DS_Store
+refundguard.db
+.env.local
+.env
+client/dist/
+
