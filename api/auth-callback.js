@@ -70,25 +70,29 @@ export default async function handler(req, res) {
     console.log('[auth-callback-v2] Exchanging code for access token...');
     
     // Exchange authorization code for access token
+    // Whop requires Basic Auth with client credentials
+    const credentials = Buffer.from(
+      `${process.env.WHOP_CLIENT_ID}:${process.env.WHOP_CLIENT_SECRET}`
+    ).toString('base64');
+    
     const tokenPayload = {
       code,
-      client_id: process.env.WHOP_CLIENT_ID,
-      client_secret: process.env.WHOP_CLIENT_SECRET,
       redirect_uri: process.env.WHOP_REDIRECT_URI,
       grant_type: 'authorization_code'
     };
     
     console.log('[auth-callback-v2] Token request payload:', {
       code: code.substring(0, 10) + '...',
-      client_id: tokenPayload.client_id,
       redirect_uri: tokenPayload.redirect_uri,
-      grant_type: tokenPayload.grant_type
+      grant_type: tokenPayload.grant_type,
+      hasBasicAuth: true
     });
     
     const tokenResponse = await fetch(WHOP_TOKEN_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Basic ${credentials}`
       },
       body: JSON.stringify(tokenPayload)
     });
