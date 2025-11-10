@@ -8,7 +8,7 @@ function App() {
   useEffect(() => {
     setStatus('App mounted successfully!');
     
-    // Test API call
+    // Test API call - try test endpoint first
     fetch('/api/test')
       .then(res => {
         console.log('Response status:', res.status);
