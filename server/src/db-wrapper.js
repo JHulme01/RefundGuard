@@ -1,17 +1,8 @@
 // Wrapper to use mock DB in serverless, real DB locally
-const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME;
+// Always use mock DB for now to avoid SQLite issues in serverless
+import * as mockDb from './db-mock.js';
 
-let dbModule;
-if (isServerless) {
-  dbModule = await import('./db-mock.js');
-} else {
-  try {
-    dbModule = await import('./db.js');
-  } catch (error) {
-    console.warn('SQLite not available, falling back to mock DB:', error.message);
-    dbModule = await import('./db-mock.js');
-  }
-}
+console.log('[db-wrapper] Using mock database (in-memory)');
 
 export const {
   upsertCreator,
@@ -21,5 +12,5 @@ export const {
   getPolicy,
   logRefund,
   listRefundLogs
-} = dbModule;
+} = mockDb;
 

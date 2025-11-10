@@ -78,15 +78,23 @@ app.get('/health', (_req, res) => {
 });
 
 app.get('/api/session', (req, res) => {
-  if (!req.session?.creatorId) {
-    return res.json({ connected: false });
+  try {
+    console.log('[api/session] Request received');
+    if (!req.session?.creatorId) {
+      console.log('[api/session] No session, returning connected:false');
+      return res.json({ connected: false });
+    }
+    const policy = getPolicy(req.session.creatorId);
+    console.log('[api/session] Returning session data');
+    res.json({
+      connected: true,
+      creatorId: req.session.creatorId,
+      policy
+    });
+  } catch (error) {
+    console.error('[api/session] Error:', error);
+    res.status(500).json({ error: 'internal_error', message: error.message });
   }
-  const policy = getPolicy(req.session.creatorId);
-  res.json({
-    connected: true,
-    creatorId: req.session.creatorId,
-    policy
-  });
 });
 
 app.use('/api/auth', authRouter);
