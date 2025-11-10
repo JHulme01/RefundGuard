@@ -6,6 +6,12 @@ const WHOP_PROFILE_URL = 'https://api.whop.com/v2/me';
 
 export default async function handler(req, res) {
   console.log('[auth-callback] Callback received');
+  console.log('[auth-callback] Query params:', req.query);
+  console.log('[auth-callback] Env check:', {
+    hasClientId: !!process.env.WHOP_CLIENT_ID,
+    hasClientSecret: !!process.env.WHOP_CLIENT_SECRET,
+    hasRedirectUri: !!process.env.WHOP_REDIRECT_URI
+  });
   
   const { code, state, error } = req.query;
   
@@ -28,10 +34,11 @@ export default async function handler(req, res) {
   }
   
   if (!code) {
+    console.error('[auth-callback] Missing authorization code');
     return res.status(400).send('Missing authorization code');
   }
   
-  console.log('[auth-callback] Exchanging code for access token...');
+  console.log('[auth-callback] Code received, exchanging for access token...');
   
   try {
     // Exchange authorization code for access token
@@ -126,23 +133,37 @@ export default async function handler(req, res) {
     `);
   } catch (error) {
     console.error('[auth-callback] Error during OAuth:', error);
-    res.send(`
-      <html>
-        <body>
-          <h1>Authentication Failed</h1>
-          <p>${error.message}</p>
-          <script>
-            if (window.opener) {
-              window.opener.postMessage({ 
-                type: 'REFUND_GUARD_AUTH_ERROR', 
-                error: '${error.message.replace(/'/g, "\\'")}'
-              }, '*');
-              setTimeout(() => window.close(), 2000);
-            }
-          </script>
-        </body>
-      </html>
-    `);
+    console.error('[auth-callback] Error stack:', error.stack);
+    
+    // Ensure we always send a response
+    try {
+      res.send(`
+        <html>
+          <body>
+            <h1>Authentication Failed</h1>
+            <p>${error.message || 'Unknown error occurred'}</p>
+            <p style="font-size: 12px; color: #666;">Check Vercel logs for details</p>
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ 
+                  type: 'REFUND_GUARD_AUTH_ERROR', 
+                  error: '${(error.message || 'Unknown error').replace(/'/g, "\\'")}'
+                }, '*');
+                setTimeout(() => window.close(), 3000);
+              }
+            </script>
+          </body>
+        </html>
+      `);
+    } catch (sendError) {
+      console.error('[auth-callback] Failed to send error response:', sendError);
+      // Last resort - try to send JSON
+      try {
+        res.status(500).json({ error: 'authentication_failed', message: error.message });
+      } catch (finalError) {
+        console.error('[auth-callback] Complete failure:', finalError);
+      }
+    }
   }
 }
 
