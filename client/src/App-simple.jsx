@@ -9,14 +9,24 @@ function App() {
     setStatus('App mounted successfully!');
     
     // Test API call
-    fetch('/api/session')
-      .then(res => res.json())
-      .then(data => {
-        setStatus(`API working! Connected: ${data.connected || false}`);
+    fetch('/api/test')
+      .then(res => {
+        console.log('Response status:', res.status);
+        return res.text();
+      })
+      .then(text => {
+        console.log('Response text:', text);
+        try {
+          const data = JSON.parse(text);
+          setStatus(`API working! Message: ${data.message}`);
+        } catch (e) {
+          setError(`Not JSON. Got: ${text.substring(0, 100)}`);
+          setStatus('API responded but not with JSON');
+        }
       })
       .catch(err => {
         setError(err.message);
-        setStatus('API call failed, but app is working');
+        setStatus('API call failed completely');
       });
   }, []);
 
