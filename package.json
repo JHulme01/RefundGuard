@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm --workspace client run dev\" \"npm --workspace server run dev\"",
-    "build": "npm --workspace client run build && npm --workspace client run postbuild",
+    "build": "npm --workspace client run build",
     "preview": "npm --workspace client run preview",
     "lint": "npm --workspace client run lint"
   },
