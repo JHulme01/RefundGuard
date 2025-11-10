@@ -407,26 +407,31 @@ function App() {
   useEffect(() => {
     let ignore = false;
     async function loadRequests() {
-      if (demoMode || !connected) {
+      if (demoMode || !connected || !creatorId) {
         setRefundRequests(normalizeRequests(demoData.requests));
         return;
       }
       try {
-        const { data } = await axios.get('/api/refund-requests');
+        console.log('[loadRequests] Fetching live refund requests for:', creatorId);
+        const { data } = await axios.get(`/api/refund-requests?creatorId=${creatorId}`);
         if (!ignore) {
+          console.log('[loadRequests] Loaded requests:', data);
           setRefundRequests(normalizeRequests(data?.data ?? []));
+          if (data?.source === 'demo') {
+            toast.info('Showing sample refund requests. Live Whop data coming soon!');
+          }
         }
       } catch (error) {
-        console.error(error);
-        toast.error('Could not load live refund queue. Staying in demo mode.');
-        setDemoMode(true);
+        console.error('[loadRequests] Error:', error);
+        toast.error('Could not load refund requests. Showing demo data.');
+        setRefundRequests(normalizeRequests(demoData.requests));
       }
     }
     loadRequests();
     return () => {
       ignore = true;
     };
-  }, [demoMode, connected]);
+  }, [demoMode, connected, creatorId]);
 
   const handleProcessRefund = async (requestId) => {
     const target = enrichedRequests.find((request) => request.id === requestId);
@@ -436,9 +441,12 @@ function App() {
 
     const amountValue = target.price ?? target.amount ?? 0;
 
-    if (!demoMode) {
+    if (!demoMode && creatorId) {
       try {
+        console.log('[handleProcessRefund] Processing refund:', requestId);
         await axios.post('/api/process-refund', {
+          creatorId,
+          requestId,
           purchaseId: target.purchaseId,
           amount: amountValue,
           memberId: target.memberId,
@@ -450,9 +458,10 @@ function App() {
           daysSincePurchase: target.daysSincePurchase,
           note: `Automated via RefundGuard policy ${selectedPolicy.name}`
         });
+        console.log('[handleProcessRefund] Refund processed successfully');
       } catch (error) {
-        console.error(error);
-        toast.error('Whop refund failed. Check your credentials.');
+        console.error('[handleProcessRefund] Error:', error);
+        toast.error('Refund processing failed. Please try again.');
         return;
       }
     }
