@@ -22,11 +22,20 @@ function getRedirectUri() {
 }
 
 router.get('/login', (req, res) => {
+  console.log('[auth/login] Request received');
   const clientId = process.env.WHOP_CLIENT_ID;
   const redirectUri = getRedirectUri();
+  
+  console.log('[auth/login] Config:', {
+    hasClientId: !!clientId,
+    clientId: clientId ? `${clientId.substring(0, 10)}...` : 'missing',
+    hasRedirectUri: !!redirectUri,
+    redirectUri: redirectUri || 'missing'
+  });
 
   if (!clientId || !redirectUri) {
-    return res.status(500).json({ error: 'missing_whop_credentials' });
+    console.error('[auth/login] Missing credentials');
+    return res.status(500).json({ error: 'missing_whop_credentials', details: { hasClientId: !!clientId, hasRedirectUri: !!redirectUri } });
   }
 
   const state = uuidv4();
@@ -38,6 +47,7 @@ router.get('/login', (req, res) => {
     scopeString
   )}&state=${encodeURIComponent(state)}`;
 
+  console.log('[auth/login] Returning OAuth URL');
   res.json({ url });
 });
 
