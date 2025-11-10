@@ -9,12 +9,12 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm --workspace client run dev\" \"npm --workspace server run dev\"",
-    "build": "npm --workspace client run build",
+    "build": "cross-env ROLLUP_NO_NATIVE=1 npm --workspace client run build",
     "preview": "npm --workspace client run preview",
     "lint": "npm --workspace client run lint"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "cross-env": "^10.1.0"
   }
 }
-
