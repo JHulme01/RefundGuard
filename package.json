@@ -1,7 +1,7 @@
 {
   "name": "refundguard",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "RefundGuard - minimal Whop refund policy automation MVP",
   "engines": {
     "node": "20.x"
