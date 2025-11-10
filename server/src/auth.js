@@ -23,32 +23,49 @@ function getRedirectUri() {
 
 router.get('/login', (req, res) => {
   console.log('[auth/login] Request received');
-  const clientId = process.env.WHOP_CLIENT_ID;
-  const redirectUri = getRedirectUri();
   
-  console.log('[auth/login] Config:', {
-    hasClientId: !!clientId,
-    clientId: clientId ? `${clientId.substring(0, 10)}...` : 'missing',
-    hasRedirectUri: !!redirectUri,
-    redirectUri: redirectUri || 'missing'
-  });
+  try {
+    const clientId = process.env.WHOP_CLIENT_ID;
+    const redirectUri = getRedirectUri();
+    
+    console.log('[auth/login] Config:', {
+      hasClientId: !!clientId,
+      clientId: clientId ? `${clientId.substring(0, 10)}...` : 'missing',
+      hasRedirectUri: !!redirectUri,
+      redirectUri: redirectUri || 'missing'
+    });
 
-  if (!clientId || !redirectUri) {
-    console.error('[auth/login] Missing credentials');
-    return res.status(500).json({ error: 'missing_whop_credentials', details: { hasClientId: !!clientId, hasRedirectUri: !!redirectUri } });
+    if (!clientId || !redirectUri) {
+      console.error('[auth/login] Missing credentials');
+      return res.status(500).json({ 
+        error: 'missing_whop_credentials', 
+        details: { hasClientId: !!clientId, hasRedirectUri: !!redirectUri } 
+      });
+    }
+
+    const state = uuidv4();
+    
+    // Try to set session, but don't fail if it doesn't work
+    try {
+      if (req.session) {
+        req.session.oauthState = state;
+      }
+    } catch (sessionError) {
+      console.warn('[auth/login] Session storage failed, continuing anyway:', sessionError.message);
+    }
+
+    const url = `${WHOP_AUTHORIZE_URL}?client_id=${encodeURIComponent(
+      clientId
+    )}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(
+      scopeString
+    )}&state=${encodeURIComponent(state)}`;
+
+    console.log('[auth/login] Returning OAuth URL');
+    return res.json({ url, state });
+  } catch (error) {
+    console.error('[auth/login] Unexpected error:', error);
+    return res.status(500).json({ error: 'internal_error', message: error.message });
   }
-
-  const state = uuidv4();
-  req.session.oauthState = state;
-
-  const url = `${WHOP_AUTHORIZE_URL}?client_id=${encodeURIComponent(
-    clientId
-  )}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(
-    scopeString
-  )}&state=${encodeURIComponent(state)}`;
-
-  console.log('[auth/login] Returning OAuth URL');
-  res.json({ url });
 });
 
 router.get('/logout', (req, res) => {
