@@ -382,9 +382,17 @@ function App() {
         'refundguard-whop-oauth',
         'width=480,height=640,noopener'
       );
-      if (!authWindow) {
+      if (!authWindow || authWindow.closed) {
         console.error('[handleConnectWhop] Popup was blocked');
-        toast.error('Please allow pop-ups to connect your Whop store.');
+        toast.error('Popup blocked! Please allow popups and try again.', { duration: 5000 });
+        // Offer alternative: open in same window
+        const useCurrentWindow = window.confirm(
+          'Popup was blocked. Would you like to connect in this window instead?\n\n' +
+          '(You will need to navigate back after connecting)'
+        );
+        if (useCurrentWindow) {
+          window.location.href = data.url;
+        }
       } else {
         console.log('[handleConnectWhop] Popup opened successfully');
       }
