@@ -10,7 +10,7 @@
 
 ### 🔄 In Progress - Feature Restoration
 - [x] Restore full Express backend with all API routes
-- [ ] Test Whop OAuth connection flow
+- [x] Test Whop OAuth connection flow (WORKING!)
 - [ ] Implement policy persistence (save/load from database)
 - [ ] Fetch live refund requests from Whop API
 - [ ] Enable refund processing via Whop API
