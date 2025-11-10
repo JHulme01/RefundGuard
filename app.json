@@ -20,11 +20,11 @@
   "webhooks": [
     {
       "event": "refund.created",
-      "url": "https://your-deployment-url.vercel.app/api/webhooks/whop"
+      "url": "https://refund-guard-client.vercel.app/api/webhooks-whop"
     },
     {
       "event": "refund.updated",
-      "url": "https://your-deployment-url.vercel.app/api/webhooks/whop"
+      "url": "https://refund-guard-client.vercel.app/api/webhooks-whop"
     }
   ],
   "whop_api_version": "2023-12-31",
