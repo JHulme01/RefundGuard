@@ -1,0 +1,21 @@
+{
+  "buildCommand": "npm install && npm run build --workspace client",
+  "outputDirectory": "client/dist",
+  "framework": null,
+  "functions": {
+    "api/index.mjs": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.mjs"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/client/dist/$1"
+    }
+  ]
+}
+
