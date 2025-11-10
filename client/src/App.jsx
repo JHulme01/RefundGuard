@@ -316,7 +316,7 @@ function App() {
     [activeProductId]
   );
 
-  const evaluateDecision = (request) => {
+  const evaluateDecision = useCallback((request) => {
     if (selectedPolicy.id === 'no-refund') {
       return 'denied';
     }
@@ -325,7 +325,7 @@ function App() {
     }
     const threshold = Number(customPolicy.days) || 0;
     return request.daysSincePurchase <= threshold ? 'approved' : 'denied';
-  };
+  }, [selectedPolicy.id, customPolicy.days]);
 
   const enrichedRequests = useMemo(
     () =>
@@ -337,7 +337,7 @@ function App() {
           decision: status !== 'pending' ? status : evaluateDecision(req)
         };
       }),
-    [refundRequests, selectedPolicy, customPolicy]
+    [refundRequests, selectedPolicy.id, customPolicy.days, evaluateDecision]
   );
 
   const handleConnectWhop = async () => {
