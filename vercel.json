@@ -4,8 +4,8 @@
   "outputDirectory": "client/dist",
   "framework": null,
   "functions": {
-    "api/*.mjs": {
-      "runtime": "nodejs20.x"
+    "api/index.mjs": {
+      "maxDuration": 10
     }
   },
   "rewrites": [
