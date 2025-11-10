@@ -1,7 +1,7 @@
 {
   "name": "refundguard",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "RefundGuard - minimal Whop refund policy automation MVP",
   "engines": {
     "node": "20.x"
@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm --workspace client run dev\" \"npm --workspace server run dev\"",
+    "clean": "rm -rf client/dist .vercel",
     "build": "npm --workspace client run build",
     "preview": "npm --workspace client run preview",
     "lint": "npm --workspace client run lint"
