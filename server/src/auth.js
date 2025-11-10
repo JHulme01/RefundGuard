@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-import { upsertCreator, saveTokens, getPolicy } from './db.js';
+import { upsertCreator, saveTokens, getPolicy } from './db-wrapper.js';
 
 const router = Router();
 

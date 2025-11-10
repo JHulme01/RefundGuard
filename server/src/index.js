@@ -7,7 +7,7 @@ import { fetchPurchases, createRefund, revokeAccess } from './whopClient.js';
 import authRouter from './auth.js';
 import policyRouter from './policy.js';
 import webhookRouter from './webhooks.js';
-import { getPolicy, listRefundLogs, logRefund, getTokens } from './db.js';
+import { getPolicy, listRefundLogs, logRefund, getTokens } from './db-wrapper.js';
 import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config();

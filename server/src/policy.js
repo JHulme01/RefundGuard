@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { savePolicy, getPolicy, listRefundLogs } from './db.js';
+import { savePolicy, getPolicy, listRefundLogs } from './db-wrapper.js';
 
 const router = Router();
 

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import crypto from 'crypto';
-import { logRefund } from './db.js';
+import { logRefund } from './db-wrapper.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
