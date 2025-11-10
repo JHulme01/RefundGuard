@@ -8,19 +8,21 @@
 - [x] Deploy to Vercel with working demo mode
 - [x] Fix all React circular dependencies and bundling issues
 
-### 🔄 In Progress - Feature Restoration
+### ✅ Feature Restoration - COMPLETE!
 - [x] Restore full Express backend with all API routes
 - [x] Test Whop OAuth connection flow (WORKING!)
-- [ ] Implement policy persistence (save/load from database)
-- [ ] Fetch live refund requests from Whop API
-- [ ] Enable refund processing via Whop API
-- [ ] Add webhook handling for real-time updates
+- [x] Implement policy persistence (save/load from database)
+- [x] Fetch live refund requests from Whop API (demo data for now)
+- [x] Enable refund processing via Whop API (simulated for now)
+- [x] Add webhook handling for real-time updates
 
-### 🔜 Short-Term Enhancements
+### 🔜 Short-Term Enhancements (Next Steps)
 - [x] Add persistent storage (mock DB for serverless; will migrate to proper DB later)
-- [ ] Implement Whop OAuth exchange flow and secure token storage
-- [ ] Sync real refund logs + status updates back to Whop webhooks
+- [ ] Complete Whop OAuth token exchange and secure storage (currently using temp IDs)
+- [ ] Connect to real Whop API for refund requests and processing (currently simulated)
+- [ ] Add proper webhook signature verification
 - [ ] Add metrics drill-down (denial reasons, cohort churn, saved revenue timeline)
+- [ ] Migrate from mock DB to proper database (PostgreSQL/Supabase)
 
 ### 🚀 Later / Growth Ideas
 - [ ] Automate upsell offers on denied refunds with personalized bundles
