@@ -2,21 +2,6 @@
   "installCommand": "npm install --include=optional",
   "buildCommand": "npm run build",
   "outputDirectory": "client/dist",
-  "framework": null,
-  "functions": {
-    "api/index.mjs": {
-      "runtime": "nodejs20.x"
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index.mjs"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/$1"
-    }
-  ]
+  "framework": null
 }
 
