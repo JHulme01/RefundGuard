@@ -1,5 +1,32 @@
 // Handle Whop webhook events for refund status updates
 import { logRefund } from '../server/src/db-wrapper.js';
+import crypto from 'crypto';
+
+/**
+ * Verify Whop webhook signature
+ * Whop signs webhooks with HMAC-SHA256
+ */
+function verifyWebhookSignature(payload, signature, secret) {
+  if (!signature || !secret) {
+    return false;
+  }
+  
+  // Whop sends signature in format: "sha256=<hash>"
+  const expectedSignature = `sha256=${crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex')}`;
+  
+  // Use timing-safe comparison to prevent timing attacks
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
+  } catch (error) {
+    return false;
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -9,15 +36,28 @@ export default async function handler(req, res) {
   console.log('[webhooks-whop] Webhook received');
   
   try {
-    const event = req.body;
-    console.log('[webhooks-whop] Event type:', event.type);
-    
     // Verify webhook signature if secret is set
     const secret = process.env.WHOP_WEBHOOK_SECRET;
-    if (secret) {
-      // TODO: Implement signature verification
-      console.log('[webhooks-whop] Signature verification skipped for now');
+    const signature = req.headers['x-whop-signature'] || req.headers['whop-signature'];
+    
+    if (secret && signature) {
+      const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+      const isValid = verifyWebhookSignature(rawBody, signature, secret);
+      
+      if (!isValid) {
+        console.error('[webhooks-whop] Invalid webhook signature');
+        return res.status(401).json({ error: 'Invalid signature' });
+      }
+      
+      console.log('[webhooks-whop] Signature verified');
+    } else if (secret) {
+      console.warn('[webhooks-whop] Webhook secret configured but no signature provided');
+    } else {
+      console.warn('[webhooks-whop] Webhook signature verification disabled (no secret configured)');
     }
+    
+    const event = req.body;
+    console.log('[webhooks-whop] Event type:', event.type);
     
     // Handle refund events
     if (event.type === 'refund.created' || event.type === 'refund.updated') {

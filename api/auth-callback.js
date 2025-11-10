@@ -1,4 +1,9 @@
-// Simple OAuth callback handler
+// Full OAuth callback handler with token exchange
+import { upsertCreator, saveTokens, getPolicy } from '../server/src/db-wrapper.js';
+
+const WHOP_TOKEN_URL = 'https://api.whop.com/v2/oauth/token';
+const WHOP_PROFILE_URL = 'https://api.whop.com/v2/me';
+
 export default async function handler(req, res) {
   console.log('[auth-callback] Callback received');
   
@@ -26,32 +31,118 @@ export default async function handler(req, res) {
     return res.status(400).send('Missing authorization code');
   }
   
-  console.log('[auth-callback] Got code, exchanging for token...');
+  console.log('[auth-callback] Exchanging code for access token...');
   
-  // Generate a simple creator ID from the code (temporary until we implement full OAuth)
-  const creatorId = `creator_${code.substring(0, 8)}`;
-  
-  console.log('[auth-callback] Generated creatorId:', creatorId);
-  
-  res.send(`
-    <html>
-      <body>
-        <h1>Success!</h1>
-        <p>Connecting to Whop...</p>
-        <script>
-          if (window.opener) {
-            window.opener.postMessage({ 
-              type: 'REFUND_GUARD_AUTH_SUCCESS', 
-              creatorId: '${creatorId}',
-              policy: null
-            }, '*');
-            setTimeout(() => window.close(), 1000);
-          } else {
-            document.body.innerHTML = '<h1>Success!</h1><p>You can close this window now.</p>';
-          }
-        </script>
-      </body>
-    </html>
-  `);
+  try {
+    // Exchange authorization code for access token
+    const tokenResponse = await fetch(WHOP_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        code,
+        client_id: process.env.WHOP_CLIENT_ID,
+        client_secret: process.env.WHOP_CLIENT_SECRET,
+        redirect_uri: process.env.WHOP_REDIRECT_URI,
+        grant_type: 'authorization_code'
+      })
+    });
+    
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      console.error('[auth-callback] Token exchange failed:', tokenResponse.status, errorText);
+      throw new Error(`Token exchange failed: ${tokenResponse.status}`);
+    }
+    
+    const tokenData = await tokenResponse.json();
+    const { access_token, refresh_token, expires_in } = tokenData;
+    
+    console.log('[auth-callback] Token received, fetching user profile...');
+    
+    // Fetch user profile using access token
+    const profileResponse = await fetch(WHOP_PROFILE_URL, {
+      headers: {
+        'Authorization': `Bearer ${access_token}`
+      }
+    });
+    
+    if (!profileResponse.ok) {
+      const errorText = await profileResponse.text();
+      console.error('[auth-callback] Profile fetch failed:', profileResponse.status, errorText);
+      throw new Error(`Profile fetch failed: ${profileResponse.status}`);
+    }
+    
+    const profile = await profileResponse.json();
+    console.log('[auth-callback] Profile fetched:', profile.id);
+    
+    // Create or update creator in database
+    const creatorId = profile.id;
+    upsertCreator({
+      id: creatorId,
+      whopId: profile.id,
+      name: profile.username || profile.email || 'Whop Creator',
+      email: profile.email || null
+    });
+    
+    // Save tokens to database
+    const expiresAt = expires_in 
+      ? new Date(Date.now() + expires_in * 1000).toISOString()
+      : null;
+    
+    saveTokens({
+      creatorId,
+      accessToken: access_token,
+      refreshToken: refresh_token,
+      expiresAt
+    });
+    
+    console.log('[auth-callback] Creator saved, loading policy...');
+    
+    // Load saved policy
+    const policy = getPolicy(creatorId);
+    
+    console.log('[auth-callback] OAuth complete, sending success message');
+    
+    res.send(`
+      <html>
+        <body>
+          <h1>Success!</h1>
+          <p>Connected to Whop successfully!</p>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ 
+                type: 'REFUND_GUARD_AUTH_SUCCESS', 
+                creatorId: '${creatorId}',
+                policy: ${JSON.stringify(policy || null)}
+              }, '*');
+              setTimeout(() => window.close(), 1000);
+            } else {
+              document.body.innerHTML = '<h1>Success!</h1><p>You can close this window and return to the app.</p>';
+            }
+          </script>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('[auth-callback] Error during OAuth:', error);
+    res.send(`
+      <html>
+        <body>
+          <h1>Authentication Failed</h1>
+          <p>${error.message}</p>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ 
+                type: 'REFUND_GUARD_AUTH_ERROR', 
+                error: '${error.message.replace(/'/g, "\\'")}'
+              }, '*');
+              setTimeout(() => window.close(), 2000);
+            }
+          </script>
+        </body>
+      </html>
+    `);
+  }
 }
 
