@@ -293,7 +293,7 @@ function App() {
       .filter((request) => request.status === 'denied' || request.decision === 'denied')
       .reduce((sum, request) => sum + Number(request.price ?? request.amount ?? 0), 0);
     setProtectedTotal(saved);
-  }, [demoMode, enrichedRequests]);
+  }, [demoMode, refundRequests, selectedPolicy.id, customPolicy.days]);
 
   useEffect(() => {
     if (!connected || autoDisabledDemo) {
@@ -316,28 +316,30 @@ function App() {
     [activeProductId]
   );
 
-  const evaluateDecision = useCallback((request) => {
-    if (selectedPolicy.id === 'no-refund') {
-      return 'denied';
-    }
-    if (selectedPolicy.id === 'seven-day') {
-      return request.daysSincePurchase <= 7 ? 'approved' : 'denied';
-    }
-    const threshold = Number(customPolicy.days) || 0;
-    return request.daysSincePurchase <= threshold ? 'approved' : 'denied';
-  }, [selectedPolicy.id, customPolicy.days]);
-
   const enrichedRequests = useMemo(
     () =>
       refundRequests.map((req) => {
         const status = req.status ?? 'pending';
+        let decision = status;
+        
+        if (status === 'pending') {
+          if (selectedPolicy.id === 'no-refund') {
+            decision = 'denied';
+          } else if (selectedPolicy.id === 'seven-day') {
+            decision = req.daysSincePurchase <= 7 ? 'approved' : 'denied';
+          } else {
+            const threshold = Number(customPolicy.days) || 0;
+            decision = req.daysSincePurchase <= threshold ? 'approved' : 'denied';
+          }
+        }
+        
         return {
           ...req,
           status,
-          decision: status !== 'pending' ? status : evaluateDecision(req)
+          decision
         };
       }),
-    [refundRequests, selectedPolicy.id, customPolicy.days, evaluateDecision]
+    [refundRequests, selectedPolicy.id, customPolicy.days]
   );
 
   const handleConnectWhop = async () => {
