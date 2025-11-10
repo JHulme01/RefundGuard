@@ -348,7 +348,7 @@ function App() {
   const handleConnectWhop = async () => {
     try {
       console.log('[handleConnectWhop] Starting OAuth flow...');
-      const { data } = await axios.get('/api/auth/login');
+      const { data } = await axios.get('/api/test-auth');
       console.log('[handleConnectWhop] Login response:', data);
       if (!data?.url) {
         console.error('[handleConnectWhop] No URL in response');
