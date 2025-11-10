@@ -347,21 +347,28 @@ function App() {
 
   const handleConnectWhop = async () => {
     try {
+      console.log('[handleConnectWhop] Starting OAuth flow...');
       const { data } = await axios.get('/api/auth/login');
+      console.log('[handleConnectWhop] Login response:', data);
       if (!data?.url) {
+        console.error('[handleConnectWhop] No URL in response');
         toast.error('Could not start Whop OAuth. Check your credentials.');
         return;
       }
+      console.log('[handleConnectWhop] Opening popup with URL:', data.url);
       const authWindow = window.open(
         data.url,
         'refundguard-whop-oauth',
         'width=480,height=640,noopener'
       );
       if (!authWindow) {
+        console.error('[handleConnectWhop] Popup was blocked');
         toast.error('Please allow pop-ups to connect your Whop store.');
+      } else {
+        console.log('[handleConnectWhop] Popup opened successfully');
       }
     } catch (error) {
-      console.error(error);
+      console.error('[handleConnectWhop] Error:', error);
       toast.error('Failed to connect to Whop. Verify API settings and retry.');
     }
   };
