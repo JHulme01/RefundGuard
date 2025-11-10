@@ -28,8 +28,11 @@ export default async function handler(req, res) {
   
   console.log('[auth-callback] Got code, exchanging for token...');
   
-  // For now, just close the popup and show success
-  // We'll implement full token exchange in next step
+  // Generate a simple creator ID from the code (temporary until we implement full OAuth)
+  const creatorId = `creator_${code.substring(0, 8)}`;
+  
+  console.log('[auth-callback] Generated creatorId:', creatorId);
+  
   res.send(`
     <html>
       <body>
@@ -39,7 +42,7 @@ export default async function handler(req, res) {
           if (window.opener) {
             window.opener.postMessage({ 
               type: 'REFUND_GUARD_AUTH_SUCCESS', 
-              creatorId: 'demo-user',
+              creatorId: '${creatorId}',
               policy: null
             }, '*');
             setTimeout(() => window.close(), 1000);

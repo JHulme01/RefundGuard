@@ -162,6 +162,7 @@ const normalizeRequests = (requests = []) =>
   });
 
 function App() {
+  const [creatorId, setCreatorId] = useState(null);
   const [connected, setConnected] = useState(false);
   const [policySynced, setPolicySynced] = useState(false);
   const [isHydratingPolicy, setIsHydratingPolicy] = useState(false);
@@ -180,7 +181,8 @@ function App() {
 
   const savePolicy = useCallback(
     async (policyId, overrides = {}) => {
-      if (!connected || !policySynced || isHydratingPolicy) {
+      if (!connected || !policySynced || isHydratingPolicy || !creatorId) {
+        console.log('[savePolicy] Skipping save - not ready', { connected, policySynced, isHydratingPolicy, hasCreatorId: !!creatorId });
         return;
       }
       const customDaysValue =
@@ -188,17 +190,20 @@ function App() {
       const normalizedDays =
         customDaysValue === '' ? null : Number(customDaysValue);
       try {
-        await axios.post('/api/policy', {
+        console.log('[savePolicy] Saving policy:', policyId);
+        await axios.post('/api/policy-save', {
+          creatorId,
           policyId,
           customDays: Number.isNaN(normalizedDays) ? null : normalizedDays,
           customCondition: overrides.customCondition ?? customPolicy.condition
         });
+        console.log('[savePolicy] Policy saved successfully');
       } catch (error) {
-        console.error(error);
+        console.error('[savePolicy] Error:', error);
         toast.error('Could not save policy. Please retry.');
       }
     },
-    [connected, policySynced, isHydratingPolicy, customPolicy]
+    [connected, policySynced, isHydratingPolicy, creatorId, customPolicy]
   );
 
   const applyPolicyFromBackend = useCallback((policy) => {
@@ -261,11 +266,27 @@ function App() {
   }, [applyPolicyFromBackend]);
 
   useEffect(() => {
-    const handleMessage = (event) => {
+    const handleMessage = async (event) => {
       if (event?.data?.type === 'REFUND_GUARD_AUTH_SUCCESS') {
+        const newCreatorId = event.data.creatorId;
+        console.log('[OAuth Success] Creator ID:', newCreatorId);
+        
+        setCreatorId(newCreatorId);
         setConnected(true);
         setAutoDisabledDemo(false);
-        applyPolicyFromBackend(event.data.policy);
+        
+        // Load saved policy from backend
+        if (newCreatorId) {
+          try {
+            const { data } = await axios.get(`/api/policy-get?creatorId=${newCreatorId}`);
+            console.log('[OAuth Success] Loaded policy:', data.policy);
+            applyPolicyFromBackend(data.policy);
+          } catch (error) {
+            console.error('[OAuth Success] Failed to load policy:', error);
+            applyPolicyFromBackend(null);
+          }
+        }
+        
         setPolicySynced(true);
         setIsLoadingSession(false);
         toast.success('Whop store connected — products synced.');
