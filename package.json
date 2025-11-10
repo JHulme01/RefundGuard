@@ -3,13 +3,16 @@
   "private": true,
   "version": "0.1.0",
   "description": "RefundGuard - minimal Whop refund policy automation MVP",
+  "engines": {
+    "node": "20.x"
+  },
   "workspaces": [
     "client",
     "server"
   ],
   "scripts": {
     "dev": "concurrently \"npm --workspace client run dev\" \"npm --workspace server run dev\"",
-    "build": "cross-env ROLLUP_NO_NATIVE=1 npm --workspace client run build",
+    "build": "npm --workspace client run build",
     "preview": "npm --workspace client run preview",
     "lint": "npm --workspace client run lint"
   },
