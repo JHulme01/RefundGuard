@@ -230,7 +230,9 @@ function App() {
     let ignore = false;
     async function loadSession() {
       try {
+        console.log('[App] Loading session from /api/session...');
         const { data } = await axios.get('/api/session');
+        console.log('[App] Session response:', data);
         if (ignore) return;
         if (data?.connected) {
           setConnected(true);
@@ -241,11 +243,12 @@ function App() {
         }
       } catch (error) {
         if (!ignore) {
-          console.error(error);
+          console.error('[App] Session load error:', error);
           setAllowSync(true);
         }
       } finally {
         if (!ignore) {
+          console.log('[App] Session loading complete, enabling UI');
           setPolicySynced(true);
           setIsLoadingSession(false);
         }
