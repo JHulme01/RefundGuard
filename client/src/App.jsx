@@ -171,7 +171,7 @@ function App() {
     days: 14,
     condition: 'Screenshots of lack of access or feature issue'
   });
-  const [isLoadingSession, setIsLoadingSession] = useState(true);
+  const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [demoMode, setDemoMode] = useState(true);
   const [activeProductId, setActiveProductId] = useState(demoData.products[0].id);
   const [refundRequests, setRefundRequests] = useState(normalizeRequests(demoData.requests));
